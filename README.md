@@ -9,7 +9,7 @@
 #include "httpheader.h"
 
 int main() {
-  Http::SslClient http_client(L"httpbin.org");
+  Http::SslClient http_client(L"httpbin.org"); // Http::Client for non-ssl
   http_client.SetMethod(Http::Method::POST);
   http_client.SetPath(L"/post");
   http_client.SetUserAgent(

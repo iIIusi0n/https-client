@@ -30,22 +30,21 @@ Client::~Client() {
 }
 
 void Client::SetMethod(const wchar_t *method) {
-  method_ = new wchar_t[wcslen(method) + 1];
+  method_ = new wchar_t[wcslen(method) + 1]();
   wcscpy(method_, method);
 }
 
 void Client::SetPath(const wchar_t *path) {
-  path_ = new wchar_t[wcslen(path) + 1];
+  path_ = new wchar_t[wcslen(path) + 1]();
   wcscpy(path_, path);
 }
 
 void Client::SetUserAgent(const wchar_t *user_agent) {
-  user_agent_ = new wchar_t[wcslen(user_agent) + 1];
-  wcscpy(user_agent_, user_agent);
+  AddCustomHeader(L"User-Agent", user_agent);
 }
 
 void Client::SetReferer(const wchar_t *referer) {
-  referer_ = new wchar_t[wcslen(referer) + 1];
+  referer_ = new wchar_t[wcslen(referer) + 1]();
   wcscpy(referer_, referer);
 }
 
@@ -58,11 +57,12 @@ void Client::AddRequestHeader(const wchar_t *header) {
       http_request_,
       header,
       -1,
-      HTTP_ADDREQ_FLAG_ADD);
+      HTTP_ADDREQ_FLAG_ADD |
+          HTTP_ADDREQ_FLAG_REPLACE);
 }
 
 void Client::AddCustomHeader(const wchar_t *name, const wchar_t *value) {
-  auto *header = new wchar_t[wcslen(name) + wcslen(value) + 5];
+  auto *header = new wchar_t[wcslen(name) + wcslen(value) + 5]();
   wcscpy(header, name);
   wcscat(header, L": ");
   wcscat(header, value);
@@ -71,14 +71,14 @@ void Client::AddCustomHeader(const wchar_t *name, const wchar_t *value) {
 }
 
 void Client::AddBodyData(const wchar_t *content_type, const char *content,
-                            size_t content_length) {
+                         size_t content_length) {
   AddCustomHeader(L"Content-Type", content_type);
   content_length_ = content_length;
-  content_ = new char[content_length];
+  content_ = new char[content_length + 1]();
   memcpy(content_, content, content_length);
 }
 
-char *Client::SendRequest(int &data_size) {
+void Client::BuildRequest() {
   http_request_ = HttpOpenRequest(
       internet_connection_,
       method_,
@@ -88,6 +88,9 @@ char *Client::SendRequest(int &data_size) {
       accept_,
       0,
       0);
+}
+
+char *Client::SendRequest(int &data_size) {
   HttpSendRequest(http_request_, nullptr, 0, (LPVOID) content_, content_length_);
 
   int buffer_size = 128;
@@ -122,7 +125,7 @@ char *Client::SendRequest(int &data_size) {
   return data;
 }
 
-char *SslClient::SendRequest(int &data_size) {
+void SslClient::BuildRequest() {
   http_request_ = HttpOpenRequest(
       internet_connection_,
       method_,
@@ -130,10 +133,13 @@ char *SslClient::SendRequest(int &data_size) {
       L"HTTP/1.1",
       referer_,
       accept_,
-      (u_int)INTERNET_FLAG_SECURE |
-          (u_int)INTERNET_FLAG_IGNORE_CERT_CN_INVALID |
-          (u_int)INTERNET_FLAG_IGNORE_CERT_DATE_INVALID,
+      (u_int) INTERNET_FLAG_SECURE |
+          (u_int) INTERNET_FLAG_IGNORE_CERT_CN_INVALID |
+          (u_int) INTERNET_FLAG_IGNORE_CERT_DATE_INVALID,
       0);
+}
+
+char *SslClient::SendRequest(int &data_size) {
   HttpSendRequest(http_request_, nullptr, 0, (LPVOID) content_, content_length_);
 
   int buffer_size = 128;

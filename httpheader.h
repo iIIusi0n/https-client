@@ -5,7 +5,7 @@
 #ifndef HTTPS_NETWORK_HTTPHEADER_H_
 #define HTTPS_NETWORK_HTTPHEADER_H_
 
-namespace Http {
+namespace Request {
 namespace Method {
 const wchar_t *GET = L"GET";
 const wchar_t *POST = L"POST";

@@ -14,7 +14,6 @@
 
 #include <windows.h>
 #include <wininet.h>
-#include <cwchar>
 
 namespace Http {
 class Client {
@@ -30,14 +29,13 @@ class Client {
   void AddCustomHeader(const wchar_t *name, const wchar_t *value);
   void AddBodyData(const wchar_t *content_type, const char *content,
                    size_t content_length);
+  virtual void BuildRequest();
   virtual char *SendRequest(int &data_size);
 
  private:
   void AddRequestHeader(const wchar_t *header);
 
   HINTERNET internet_session_;
-
-  wchar_t *user_agent_ = nullptr;
 
  protected:
   HINTERNET http_request_ = nullptr;
@@ -55,6 +53,7 @@ class SslClient : public Client {
   explicit SslClient(const wchar_t *hostname,
                      int port = INTERNET_DEFAULT_HTTPS_PORT)
       : Client(hostname, port) {}
+  void BuildRequest() override;
   char *SendRequest(int &data_size) override;
 };
 }
